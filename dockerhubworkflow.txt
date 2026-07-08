@@ -1,0 +1,38 @@
+name: Docker CI/CD Pipeline
+
+# when does this run?
+on:
+  push:
+    branches:
+      - main          # runs every time you push to main branch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest    # runs on a fresh Ubuntu machine
+
+    steps:
+
+      # Step 1 — checkout your code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2 — login to Docker Hub
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Step 3 — build the Docker image
+      - name: Build Docker image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/flask-app:latest .
+
+      # Step 4 — push to Docker Hub
+      - name: Push to Docker Hub
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/flask-app:latest
+
+      # Step 5 — deploy (pull and run latest image)
+      - name: Deploy
+        run: |
+          docker compose down
+          docker compose up -d --build
